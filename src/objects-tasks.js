@@ -417,72 +417,110 @@ function group(array, keySelector, valueSelector) {
  */
 
 class CssSelectorBuilder {
-  constructor() {
-    this.selector = '';
-    this.hasElement = false;
-    this.hasId = false;
-    this.hasClass = false;
-    this.hasAttr = false;
-    this.hasPseudoClass = false;
-    this.hasPseudoElement = false;
-  }
+  str = '';
+
+  hasElement = false;
+
+  hasId = false;
+
+  hasClass = false;
+
+  hasAttribute = false;
+
+  hasPseudoClass = false;
+
+  hasPseudoElement = false;
 
   element(value) {
-    if (this.hasElement) {
-      throw new Error(
-        'Element selector can only occur once in a compound selector'
+    if (this.hasElement)
+      throw Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
       );
-    }
-    this.selector += value;
+    if (
+      this.hasId ||
+      this.hasClass ||
+      this.hasAttribute ||
+      this.hasPseudoClass ||
+      this.hasPseudoElement
+    )
+      throw Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
     this.hasElement = true;
+    this.str += value;
     return this;
   }
 
   id(value) {
-    if (this.hasId) {
-      throw new Error('ID selector can only occur once in a compound selector');
-    }
-    this.selector += `#${value}`;
+    if (this.hasId)
+      throw Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    if (
+      this.hasClass ||
+      this.hasAttribute ||
+      this.hasPseudoClass ||
+      this.hasPseudoElement
+    )
+      throw Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+
+    this.str += `#${value}`;
     this.hasId = true;
     return this;
   }
 
   class(value) {
-    this.selector += `.${value}`;
+    if (this.hasAttribute || this.hasPseudoClass || this.hasPseudoElement)
+      throw Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+
     this.hasClass = true;
+    this.str += `.${value}`;
     return this;
   }
 
   attr(value) {
-    this.selector += `[${value}]`;
-    this.hasAttr = true;
+    if (this.hasPseudoClass || this.hasPseudoElement)
+      throw Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+
+    this.hasAttribute = true;
+    this.str += `[${value}]`;
     return this;
   }
 
   pseudoClass(value) {
-    this.selector += `:${value}`;
+    if (this.hasPseudoElement)
+      throw Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+
     this.hasPseudoClass = true;
+    this.str += `:${value}`;
     return this;
   }
 
   pseudoElement(value) {
-    if (this.hasPseudoElement) {
-      throw new Error(
-        'Pseudo-element selector can only occur once in a compound selector'
+    if (this.hasPseudoElement)
+      throw Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
       );
-    }
-    this.selector += `::${value}`;
+    this.str += `::${value}`;
     this.hasPseudoElement = true;
     return this;
   }
 
   combine(selector1, combinator, selector2) {
-    this.selector = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    this.str += `${selector1} ${combinator} ${selector2}`;
     return this;
   }
 
   stringify() {
-    return this.selector;
+    return this.str;
   }
 }
 
@@ -512,22 +550,15 @@ const cssSelectorBuilder = {
   },
 
   combine(selector1, combinator, selector2) {
-    if (
-      !(selector1 instanceof CssSelectorBuilder) ||
-      !(selector2 instanceof CssSelectorBuilder)
-    ) {
-      throw new Error(
-        'Combine method can only be used with CssSelectorBuilder instances'
-      );
-    }
+    return new CssSelectorBuilder().combine(
+      selector1.stringify(),
+      combinator,
+      selector2.stringify()
+    );
+  },
 
-    // Create a new instance to avoid modifying existing instances
-    const builder = new CssSelectorBuilder();
-
-    // Update the selector in the new instance
-    builder.selector = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
-
-    return builder;
+  stringify() {
+    return new CssSelectorBuilder().stringify();
   },
 };
 
