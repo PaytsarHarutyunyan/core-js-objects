@@ -199,25 +199,35 @@ function makeWord(lettersObject) {
  *    sellTickets([25, 25, 50]) => true
  *    sellTickets([25, 100]) => false (The seller does not have enough money to give change.)
  */
-function sellTickets(/* queue */) {
-  throw new Error('Not implemented');
-}
+function sellTickets(queue) {
+  let change25 = 0;
+  let change50 = 0;
 
-/**
- * Returns the rectangle object with width and height parameters and getArea() method
- *
- * @param {number} width
- * @param {number} height
- * @return {Object}
- *
- * @example
- *    const r = new Rectangle(10,20);
- *    console.log(r.width);       // => 10
- *    console.log(r.height);      // => 20
- *    console.log(r.getArea());   // => 200
- */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+  for (let i = 0; i < queue.length; i += 1) {
+    const payment = queue[i];
+
+    if (payment === 25) {
+      change25 += 1;
+    } else if (payment === 50) {
+      if (change25 > 0) {
+        change25 -= 1;
+        change50 += 1;
+      } else {
+        return false;
+      }
+    } else if (payment === 100) {
+      if (change50 > 0 && change25 > 0) {
+        change50 -= 1;
+        change25 -= 1;
+      } else if (change25 >= 3) {
+        change25 -= 3;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -230,8 +240,18 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+
+function getJSON(obj) {
+  return JSON.stringify(obj);
+}
+class Rectangle {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+    this.getArea = function calculateArea() {
+      return this.width * this.height;
+    };
+  }
 }
 
 /**
