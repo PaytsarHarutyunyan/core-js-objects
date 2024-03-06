@@ -241,17 +241,17 @@ function sellTickets(queue) {
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
 
+function Rectangle(width, height) {
+  this.width = width;
+  this.height = height;
+}
+
+Rectangle.prototype.getArea = function calculateArea() {
+  return this.width * this.height;
+};
+
 function getJSON(obj) {
   return JSON.stringify(obj);
-}
-class Rectangle {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
-    this.getArea = function calculateArea() {
-      return this.width * this.height;
-    };
-  }
 }
 
 /**
@@ -416,33 +416,118 @@ function group(array, keySelector, valueSelector) {
  *  For more examples see unit tests.
  */
 
+class CssSelectorBuilder {
+  constructor() {
+    this.selector = '';
+    this.hasElement = false;
+    this.hasId = false;
+    this.hasClass = false;
+    this.hasAttr = false;
+    this.hasPseudoClass = false;
+    this.hasPseudoElement = false;
+  }
+
+  element(value) {
+    if (this.hasElement) {
+      throw new Error(
+        'Element selector can only occur once in a compound selector'
+      );
+    }
+    this.selector += value;
+    this.hasElement = true;
+    return this;
+  }
+
+  id(value) {
+    if (this.hasId) {
+      throw new Error('ID selector can only occur once in a compound selector');
+    }
+    this.selector += `#${value}`;
+    this.hasId = true;
+    return this;
+  }
+
+  class(value) {
+    this.selector += `.${value}`;
+    this.hasClass = true;
+    return this;
+  }
+
+  attr(value) {
+    this.selector += `[${value}]`;
+    this.hasAttr = true;
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.selector += `:${value}`;
+    this.hasPseudoClass = true;
+    return this;
+  }
+
+  pseudoElement(value) {
+    if (this.hasPseudoElement) {
+      throw new Error(
+        'Pseudo-element selector can only occur once in a compound selector'
+      );
+    }
+    this.selector += `::${value}`;
+    this.hasPseudoElement = true;
+    return this;
+  }
+
+  combine(selector1, combinator, selector2) {
+    this.selector = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return this;
+  }
+
+  stringify() {
+    return this.selector;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new CssSelectorBuilder().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new CssSelectorBuilder().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new CssSelectorBuilder().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new CssSelectorBuilder().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new CssSelectorBuilder().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new CssSelectorBuilder().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    if (
+      !(selector1 instanceof CssSelectorBuilder) ||
+      !(selector2 instanceof CssSelectorBuilder)
+    ) {
+      throw new Error(
+        'Combine method can only be used with CssSelectorBuilder instances'
+      );
+    }
+
+    // Create a new instance to avoid modifying existing instances
+    const builder = new CssSelectorBuilder();
+
+    // Update the selector in the new instance
+    builder.selector = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+
+    return builder;
   },
 };
 
